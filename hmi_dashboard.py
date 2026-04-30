@@ -86,7 +86,7 @@ with st.sidebar:
 # ==========================================
 # PANEL PRINCIPAL (MAIN DASHBOARD)
 # ==========================================
-st.title("⚡ AI Factory - Telemetría Térmica de Alta Densidad (DLC)")
+st.title("⚡ Korat Flow HMI | v1.1 - LIVE")
 st.markdown("Monitor de Rendimiento Térmico en Tiempo Real - **Rack 240kW**")
 
 # Contenedor principal que se actualizará
