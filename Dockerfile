@@ -1,5 +1,5 @@
-# Usar la imagen de Python 3.12 COMPLETA (resuelve problemas de compilación científica)
-FROM python:3.12
+# Usar Python 3.11 (Garantiza compatibilidad de binarios precompilados para CoolProp en Linux)
+FROM python:3.11
 
 # Evitar archivos .pyc y habilitar logs (formato actualizado)
 ENV PYTHONDONTWRITEBYTECODE=1
