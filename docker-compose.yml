@@ -1,27 +1,42 @@
 services:
   korat-simulator:
     image: ghcr.io/martinpestanar/koratflow-dino:latest
-    volumes:
-      - .:/app
-    working_dir: /app
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - traefik_public
     command: python thermal_simulator.py
 
   korat-validator:
     image: ghcr.io/martinpestanar/koratflow-dino:latest
-    volumes:
-      - .:/app
-    working_dir: /app
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - traefik_public
     depends_on:
       - korat-simulator
     command: python validador_integridad.py
 
   korat-hmi:
     image: ghcr.io/martinpestanar/koratflow-dino:latest
-    ports:
-      - "8501:8501"
-    volumes:
-      - .:/app
-    working_dir: /app
-    depends_on:
-      - korat-simulator
+    networks:
+      - traefik_public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.korat-hmi.rule=Host(`dino.koratflow.agency`)"
+        - "traefik.http.routers.korat-hmi.entrypoints=websecure"
+        - "traefik.http.routers.korat-hmi.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.korat-hmi.loadbalancer.server.port=8501"
     command: streamlit run hmi_dashboard.py --server.port 8501 --server.address 0.0.0.0
+
+networks:
+  traefik_public:
+    external: true
