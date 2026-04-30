@@ -1,27 +1,25 @@
 services:
   korat-simulator:
-    image: python:3.12-slim
+    image: ghcr.io/martinpestanar/koratflow-dino:latest
+    restart: always
     volumes:
       - .:/app
     working_dir: /app
-    command: >
-      sh -c "apt-get update && apt-get install -y build-essential && 
-             pip install --no-cache-dir -r requirements.txt && 
-             python thermal_simulator.py"
+    command: python thermal_simulator.py
 
   korat-validator:
-    image: python:3.12-slim
+    image: ghcr.io/martinpestanar/koratflow-dino:latest
+    restart: always
     volumes:
       - .:/app
     working_dir: /app
     depends_on:
       - korat-simulator
-    command: >
-      sh -c "pip install --no-cache-dir -r requirements.txt && 
-             python validador_integridad.py"
+    command: python validador_integridad.py
 
   korat-hmi:
-    image: python:3.12-slim
+    image: ghcr.io/martinpestanar/koratflow-dino:latest
+    restart: always
     ports:
       - "8501:8501"
     volumes:
@@ -29,6 +27,9 @@ services:
     working_dir: /app
     depends_on:
       - korat-simulator
-    command: >
-      sh -c "pip install --no-cache-dir -r requirements.txt && 
-             streamlit run hmi_dashboard.py --server.port 8501 --server.address 0.0.0.0"
+    command: streamlit run hmi_dashboard.py --server.port 8501 --server.address 0.0.0.0
+
+networks:
+  default:
+    name: orion_network
+    external: true
