@@ -1,7 +1,6 @@
 services:
   korat-simulator:
     image: ghcr.io/martinpestanar/koratflow-dino:latest
-    restart: always
     volumes:
       - .:/app
     working_dir: /app
@@ -9,7 +8,6 @@ services:
 
   korat-validator:
     image: ghcr.io/martinpestanar/koratflow-dino:latest
-    restart: always
     volumes:
       - .:/app
     working_dir: /app
@@ -19,7 +17,6 @@ services:
 
   korat-hmi:
     image: ghcr.io/martinpestanar/koratflow-dino:latest
-    restart: always
     ports:
       - "8501:8501"
     volumes:
@@ -28,8 +25,3 @@ services:
     depends_on:
       - korat-simulator
     command: streamlit run hmi_dashboard.py --server.port 8501 --server.address 0.0.0.0
-
-networks:
-  default:
-    name: orion_network
-    external: true
