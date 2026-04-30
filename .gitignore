@@ -1,0 +1,7 @@
+venv*/
+__pycache__/
+*.pyc
+telemetria_bus.json
+shared_state.json
+.env
+.streamlit/

@@ -1,0 +1,35 @@
+services:
+  korat-simulator:
+    build: .
+    container_name: korat-simulator
+    restart: unless-stopped
+    command: python thermal_simulator.py
+    volumes:
+      - .:/app
+
+  korat-validator:
+    build: .
+    container_name: korat-validator
+    restart: unless-stopped
+    command: python validador_integridad.py
+    depends_on:
+      - korat-simulator
+    volumes:
+      - .:/app
+
+  korat-hmi:
+    build: .
+    container_name: korat-hmi
+    restart: unless-stopped
+    command: streamlit run hmi_dashboard.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    depends_on:
+      - korat-simulator
+    volumes:
+      - .:/app
+
+networks:
+  default:
+    name: orion_network # Ajusta esto al nombre de la red que usa tu n8n en Portainer
+    external: true
