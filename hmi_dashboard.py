@@ -77,8 +77,8 @@ with st.sidebar:
     
     datos = obtener_telemetria()
     if datos:
-        st.success("🟢 MQTT: Conectado (Unified Namespace)")
-        st.info("🔄 Actualización: Tiempo Real")
+        st.success("🟢 MQTT: Conectado")
+        st.info("🔄 Estado: Operacional | v1.1")
     else:
         st.error("🔴 MQTT: Desconectado")
         st.warning("Inicia el Simulador Térmico para recibir datos.")
