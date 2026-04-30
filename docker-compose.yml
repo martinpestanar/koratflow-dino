@@ -1,7 +1,6 @@
 services:
   korat-simulator:
     image: python:3.12-slim
-    restart: always
     volumes:
       - .:/app
     working_dir: /app
@@ -12,7 +11,6 @@ services:
 
   korat-validator:
     image: python:3.12-slim
-    restart: always
     volumes:
       - .:/app
     working_dir: /app
@@ -24,7 +22,6 @@ services:
 
   korat-hmi:
     image: python:3.12-slim
-    restart: always
     ports:
       - "8501:8501"
     volumes:
@@ -35,8 +32,3 @@ services:
     command: >
       sh -c "pip install --no-cache-dir -r requirements.txt && 
              streamlit run hmi_dashboard.py --server.port 8501 --server.address 0.0.0.0"
-
-networks:
-  default:
-    name: orion_network
-    external: true
