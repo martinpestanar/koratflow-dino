@@ -6,7 +6,7 @@ services:
       restart_policy:
         condition: on-failure
     networks:
-      - traefik_public
+      - chatwoot-mar
     command: python thermal_simulator.py
 
   korat-validator:
@@ -16,7 +16,7 @@ services:
       restart_policy:
         condition: on-failure
     networks:
-      - traefik_public
+      - chatwoot-mar
     depends_on:
       - korat-simulator
     command: python validador_integridad.py
@@ -24,7 +24,7 @@ services:
   korat-hmi:
     image: ghcr.io/martinpestanar/koratflow-dino:latest
     networks:
-      - traefik_public
+      - chatwoot-mar
     deploy:
       replicas: 1
       restart_policy:
@@ -38,5 +38,5 @@ services:
     command: streamlit run hmi_dashboard.py --server.port 8501 --server.address 0.0.0.0
 
 networks:
-  traefik_public:
+  chatwoot-mar:
     external: true
