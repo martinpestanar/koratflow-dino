@@ -1,35 +1,42 @@
 services:
   korat-simulator:
-    build: .
-    container_name: korat-simulator
-    restart: unless-stopped
-    command: python thermal_simulator.py
+    image: python:3.12-slim
+    restart: always
     volumes:
       - .:/app
+    working_dir: /app
+    command: >
+      sh -c "apt-get update && apt-get install -y build-essential && 
+             pip install --no-cache-dir -r requirements.txt && 
+             python thermal_simulator.py"
 
   korat-validator:
-    build: .
-    container_name: korat-validator
-    restart: unless-stopped
-    command: python validador_integridad.py
-    depends_on:
-      - korat-simulator
+    image: python:3.12-slim
+    restart: always
     volumes:
       - .:/app
+    working_dir: /app
+    depends_on:
+      - korat-simulator
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt && 
+             python validador_integridad.py"
 
   korat-hmi:
-    build: .
-    container_name: korat-hmi
-    restart: unless-stopped
-    command: streamlit run hmi_dashboard.py --server.port 8501 --server.address 0.0.0.0
+    image: python:3.12-slim
+    restart: always
     ports:
       - "8501:8501"
-    depends_on:
-      - korat-simulator
     volumes:
       - .:/app
+    working_dir: /app
+    depends_on:
+      - korat-simulator
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt && 
+             streamlit run hmi_dashboard.py --server.port 8501 --server.address 0.0.0.0"
 
 networks:
   default:
-    name: orion_network # Ajusta esto al nombre de la red que usa tu n8n en Portainer
+    name: orion_network
     external: true
