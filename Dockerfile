@@ -1,27 +1,30 @@
-# Usar una imagen ligera de Python 3.12
+# Usar una imagen de Python 3.12
 FROM python:3.12-slim
 
-# Evitar que Python genere archivos .pyc y permitir logs en tiempo real
+# Evitar archivos .pyc y habilitar logs
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Instalar dependencias del sistema para CoolProp y compilación
+# Instalar dependencias del sistema necesarias para compilar CoolProp y otras libs científicas
 RUN apt-get update && apt-get install -y \
     build-essential \
+    cmake \
+    gfortran \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# Crear carpeta de trabajo
 WORKDIR /app
 
-# Copiar requerimientos e instalar
+# Instalar requerimientos
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copiar el resto del código
+# Instalar Streamlit y Plotly (que no estaban en el requirements original)
+RUN pip install --no-cache-dir streamlit plotly
+
 COPY . .
 
-# Exponer el puerto de Streamlit
 EXPOSE 8501
 
-# Comando por defecto (será sobrescrito por docker-compose)
 CMD ["python", "thermal_simulator.py"]
