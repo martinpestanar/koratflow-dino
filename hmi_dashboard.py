@@ -16,23 +16,86 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS Personalizados para el Dark Mode Industrial
+# Estilos CSS Personalizados Premium
 st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    
     .stApp {
-        background-color: #0E1117;
-        color: #C9D1D9;
+        background: radial-gradient(circle at 50% 0%, #1a1e29 0%, #0a0e17 100%);
+        color: #E2E8F0;
     }
+    
+    /* Efecto Glassmorphism para las tarjetas */
     .metric-card {
-        background-color: #161B22;
-        border: 1px solid #30363D;
-        border-radius: 8px;
-        padding: 15px;
+        background: rgba(22, 27, 34, 0.4);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 24px 20px;
         text-align: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     }
-    .metric-value-normal { color: #3FB950; font-size: 28px; font-weight: bold; }
-    .metric-value-alert { color: #F85149; font-size: 28px; font-weight: bold; }
-    .metric-label { color: #8B949E; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 40px rgba(0, 240, 255, 0.1);
+        border: 1px solid rgba(0, 240, 255, 0.3);
+    }
+    
+    /* Títulos y valores premium */
+    .metric-label { 
+        color: #94A3B8; 
+        font-size: 13px; 
+        text-transform: uppercase; 
+        letter-spacing: 1.5px; 
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .metric-value-normal { 
+        color: #10B981; 
+        font-size: 36px; 
+        font-weight: 700; 
+        text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+    
+    .metric-value-alert { 
+        color: #EF4444; 
+        font-size: 36px; 
+        font-weight: 700; 
+        text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        animation: pulse-alert 2s infinite;
+    }
+    
+    @keyframes pulse-alert {
+        0% { text-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+        50% { text-shadow: 0 0 40px rgba(239, 68, 68, 0.8); }
+        100% { text-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+    }
+    
+    /* Gradiente para el título principal */
+    h1 {
+        background: linear-gradient(90deg, #00F0FF 0%, #3B82F6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        letter-spacing: -1px;
+    }
+    
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {
+        background: rgba(15, 23, 42, 0.8) !important;
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -59,7 +122,7 @@ if 'historial' not in st.session_state:
 # SIDEBAR: Unified Namespace & Contexto
 # ==========================================
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1200px-Python-logo-notext.svg.png", width=50) # Placeholder logo
+    st.image("logo.png", width=150) # Logo Premium de Korat Flow
     st.title("Korat Flow")
     st.markdown("### Observabilidad Industrial")
     
