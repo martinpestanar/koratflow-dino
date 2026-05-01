@@ -203,7 +203,32 @@ while True: # Bucle infinito para tiempo real fluido
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=st.session_state.historial['tiempo'], y=st.session_state.historial['potencia_kw'], name='Potencia (kW)', line=dict(color='#3B82F6', width=3), mode='lines'))
             fig.add_trace(go.Scatter(x=st.session_state.historial['tiempo'], y=st.session_state.historial['temp_c'], name='Temp (°C)', line=dict(color='#10B981', width=3), mode='lines'))
-            fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(family="Inter, sans-serif"), xaxis=dict(showgrid=False, zeroline=False), yaxis=dict(showgrid=True, gridcolor='rgba(128,128,128,0.2)'), hovermode="x unified", margin=dict(l=0, r=0, t=20, b=0), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+            fig.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(family="Inter, sans-serif", size=12),
+                xaxis=dict(
+                    showgrid=False, 
+                    zeroline=False,
+                    nticks=10, 
+                    tickangle=0 
+                ),
+                yaxis=dict(
+                    showgrid=True, 
+                    gridcolor='rgba(128,128,128,0.1)',
+                    title="kW / °C",
+                    range=[0, 350] 
+                ),
+                hovermode="x unified",
+                margin=dict(l=0, r=0, t=40, b=80), 
+                legend=dict(
+                    orientation="h", 
+                    yanchor="top", 
+                    y=-0.2, 
+                    xanchor="center", 
+                    x=0.5
+                )
+            )
             st.markdown('<div class="metric-card" style="padding: 10px;">', unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
