@@ -4,7 +4,10 @@ import os
 import time
 import pandas as pd
 import plotly.graph_objects as go
+import math
+import random
 from datetime import datetime
+from CoolProp.CoolProp import PropsSI
 
 # ==========================================
 # CONFIGURACIÓN DE LA PÁGINA
@@ -17,7 +20,45 @@ st.set_page_config(
 )
 
 # ==========================================
-# UI/UX: CSS Premium & Adaptativo (Light/Dark)
+# LÓGICA DEL GEMELO DIGITAL (SIMULADOR INTEGRADO)
+# ==========================================
+def obtener_cp_dinamico(temp_c: float) -> float:
+    try:
+        return PropsSI('C', 'T', temp_c + 273.15, 'P', 101325, 'Water') / 1000.0
+    except:
+        return 4.184
+
+def generar_dato_simulado():
+    """Genera un punto de telemetría realista basado en física térmica."""
+    t_transcurrido = time.time() % 600
+    fase = (t_transcurrido / 600.0) * 2 * math.pi
+    
+    # Carga IT base 240kW + fluctuación
+    carga_kw = 240.0 + (math.sin(fase) * 40.0) + random.gauss(0, 2.0)
+    temp_in = 45.0 + random.gauss(0, 0.1)
+    caudal_lpm = 120.0 + random.gauss(0, 0.5)
+    
+    # Inyección aleatoria de anomalía para la demo
+    es_anomalia = (int(time.time()) % 60) < 5
+    if es_anomalia: carga_kw += 50.0
+    
+    # Cálculo Delta T real
+    cp = obtener_cp_dinamico(temp_in)
+    flujo_masico = caudal_lpm / 60.0
+    delta_t = carga_kw / (flujo_masico * cp) if flujo_masico > 0 else 0
+    temp_out = temp_in + delta_t
+    
+    return {
+        "timestamp_iso": datetime.now().isoformat(),
+        "it_load_kw": round(carga_kw, 2),
+        "coolant_return_c": round(temp_out, 2),
+        "flow_rate_lpm": round(caudal_lpm, 2),
+        "partial_pue": round((carga_kw + 10) / carga_kw, 3),
+        "anomaly_flag": es_anomalia
+    }
+
+# ==========================================
+# UI/UX: CSS Premium & Adaptativo
 # ==========================================
 st.markdown("""
 <style>
@@ -27,13 +68,11 @@ html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
 }
 
-/* Variables dinámicas para Light/Dark Mode */
 :root {
     --card-bg: #ffffff;
     --card-border: #e2e8f0;
     --text-main: #0f172a;
     --text-muted: #64748b;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -42,7 +81,6 @@ html, body, [class*="css"] {
         --card-border: #334155;
         --text-main: #f8fafc;
         --text-muted: #94a3b8;
-        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     }
 }
 
@@ -51,17 +89,10 @@ html, body, [class*="css"] {
     border: 1px solid var(--card-border);
     border-radius: 16px;
     padding: 24px;
-    box-shadow: var(--shadow);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    transition: transform 0.2s ease;
 }
 
-.metric-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
+.metric-card:hover { transform: translateY(-4px); }
 
 .metric-title {
     color: var(--text-muted);
@@ -83,29 +114,25 @@ html, body, [class*="css"] {
 .value-good { color: #10b981 !important; }
 .value-blue { color: #3b82f6 !important; }
 
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.6; }
-    100% { opacity: 1; }
-}
-
-/* Ocultar barra superior de Streamlit para un look más limpio app-like */
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# LECTURA DEL BUS DE DATOS
+# LECTURA DE DATOS
 # ==========================================
 FILE_BUS = "telemetria_bus.json"
 
-@st.cache_data(ttl=1)
-def obtener_telemetria():
+def obtener_datos(modo_demo):
+    if modo_demo:
+        return generar_dato_simulado()
+    
     if os.path.exists(FILE_BUS):
         try:
             with open(FILE_BUS, "r") as f:
                 return json.load(f)
-        except Exception:
+        except:
             return None
     return None
 
@@ -116,7 +143,6 @@ if 'historial' not in st.session_state:
 # SIDEBAR
 # ==========================================
 with st.sidebar:
-    # Logo SVG Limpio y Moderno
     st.markdown("""
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -126,38 +152,26 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("### Observabilidad")
-    st.caption("Monitor Térmico en Tiempo Real")
+    st.markdown("### Control de Datos")
+    modo_demo = st.toggle("🚀 Modo Simulación (Demo)", value=False)
+    
+    if modo_demo:
+        st.info("Simulando Digital Twin en tiempo real.")
     
     st.divider()
-    
     st.markdown("**UNIFIED NAMESPACE**")
-    st.code("""
-🏢 Empresa (Korat)
- └── 🏭 Planta (DC Alpha)
-      └── 🗄️ Fila A
-           └── 💻 RACK_DLC_01
-    """, language="text")
-    
-    st.divider()
-    
-    datos = obtener_telemetria()
-    if datos:
-        st.success("🟢 Sistema Conectado")
-    else:
-        st.error("🔴 Sistema Desconectado")
-        st.caption("Esperando telemetría...")
+    st.code("🏢 Empresa (Korat)\n └── 🏭 Planta (DC Alpha)\n      └── 🗄️ Fila A\n           └── 💻 RACK_DLC_01", language="text")
 
 # ==========================================
 # PANEL PRINCIPAL
 # ==========================================
 st.title("Monitor de Rendimiento Térmico")
-st.markdown("Rack 240kW - Estado Operacional en Tiempo Real")
+st.markdown("Rack 240kW - Estado Operacional")
 
 placeholder = st.empty()
 
-for _ in range(100):
-    datos = obtener_telemetria()
+while True: # Bucle infinito para tiempo real fluido
+    datos = obtener_datos(modo_demo)
     
     if datos:
         nuevo_registro = pd.DataFrame([{
@@ -169,93 +183,33 @@ for _ in range(100):
         st.session_state.historial = pd.concat([st.session_state.historial, nuevo_registro]).tail(60)
         
         with placeholder.container():
-            # 1. TARJETAS DE MÉTRICAS (Responsive Columns)
             col1, col2, col3, col4 = st.columns(4)
-            
             estado_clase = "value-alert" if datos.get('anomaly_flag', False) else "value-blue"
             
             with col1:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-title">Carga IT Actual</div>
-                    <div class="metric-value {estado_clase}">{datos.get('it_load_kw', 0):.1f} <span style="font-size:16px;">kW</span></div>
-                </div>
-                """, unsafe_allow_html=True)
-                
+                st.markdown(f'<div class="metric-card"><div class="metric-title">Carga IT Actual</div><div class="metric-value {estado_clase}">{datos.get("it_load_kw", 0):.1f} <span style="font-size:16px;">kW</span></div></div>', unsafe_allow_html=True)
             with col2:
                 t_out = datos.get('coolant_return_c', 0)
                 color_temp = "value-alert" if t_out > 78 else "value-good"
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-title">Temp. Retorno</div>
-                    <div class="metric-value {color_temp}">{t_out:.1f} <span style="font-size:16px;">°C</span></div>
-                </div>
-                """, unsafe_allow_html=True)
-                
+                st.markdown(f'<div class="metric-card"><div class="metric-title">Temp. Retorno</div><div class="metric-value {color_temp}">{t_out:.1f} <span style="font-size:16px;">°C</span></div></div>', unsafe_allow_html=True)
             with col3:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-title">Caudal DLC</div>
-                    <div class="metric-value value-main">{datos.get('flow_rate_lpm', 0):.1f} <span style="font-size:16px;">LPM</span></div>
-                </div>
-                """, unsafe_allow_html=True)
-                
+                st.markdown(f'<div class="metric-card"><div class="metric-title">Caudal DLC</div><div class="metric-value">{datos.get("flow_rate_lpm", 0):.1f} <span style="font-size:16px;">LPM</span></div></div>', unsafe_allow_html=True)
             with col4:
                 pue = datos.get('partial_pue', 0)
                 color_pue = "value-alert" if pue > 1.05 else "value-good"
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-title">PUE Parcial</div>
-                    <div class="metric-value {color_pue}">{pue:.3f}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><div class="metric-title">PUE Parcial</div><div class="metric-value {color_pue}">{pue:.3f}</div></div>', unsafe_allow_html=True)
                 
-            st.write("") # Espaciador
-            
-            # 2. GRÁFICO DINÁMICO
-            st.subheader("Evolución de Tendencias")
-            
+            st.write("")
             fig = go.Figure()
-            
-            # Determinar el modo actual (claro/oscuro) para el gráfico no es directo en CSS variables para Plotly,
-            # así que usamos transparente para que se adapte al fondo de Streamlit.
-            fig.add_trace(go.Scatter(
-                x=st.session_state.historial['tiempo'],
-                y=st.session_state.historial['potencia_kw'],
-                name='Potencia (kW)',
-                line=dict(color='#3B82F6', width=3),
-                mode='lines'
-            ))
-            
-            fig.add_trace(go.Scatter(
-                x=st.session_state.historial['tiempo'],
-                y=st.session_state.historial['temp_c'],
-                name='Temp (°C)',
-                line=dict(color='#10B981', width=3),
-                mode='lines'
-            ))
-
-            fig.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(family="Inter, sans-serif"),
-                xaxis=dict(showgrid=False, zeroline=False),
-                yaxis=dict(showgrid=True, gridcolor='rgba(128,128,128,0.2)'),
-                hovermode="x unified",
-                margin=dict(l=0, r=0, t=20, b=0),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-            )
-            
-            # Envolvemos el gráfico en una tarjeta
+            fig.add_trace(go.Scatter(x=st.session_state.historial['tiempo'], y=st.session_state.historial['potencia_kw'], name='Potencia (kW)', line=dict(color='#3B82F6', width=3), mode='lines'))
+            fig.add_trace(go.Scatter(x=st.session_state.historial['tiempo'], y=st.session_state.historial['temp_c'], name='Temp (°C)', line=dict(color='#10B981', width=3), mode='lines'))
+            fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(family="Inter, sans-serif"), xaxis=dict(showgrid=False, zeroline=False), yaxis=dict(showgrid=True, gridcolor='rgba(128,128,128,0.2)'), hovermode="x unified", margin=dict(l=0, r=0, t=20, b=0), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
             st.markdown('<div class="metric-card" style="padding: 10px;">', unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
-            st.write("") # Espaciador
-            
-            # 3. ALERTAS
             if datos.get('anomaly_flag', False):
-                st.error("⚠️ ALERTA: Pico de carga detectado. Se recomienda inspección térmica.")
+                st.error("⚠️ ALERTA: Pico de carga detectado.")
             
     time.sleep(1)
 
