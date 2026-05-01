@@ -25,6 +25,8 @@ services:
     image: ghcr.io/martinpestanar/koratflow-dino:latest
     networks:
       - chatwoot-mar
+    environment:
+      - VERSION=1.2
     deploy:
       replicas: 1
       restart_policy:
