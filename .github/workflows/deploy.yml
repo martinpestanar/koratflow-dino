@@ -28,9 +28,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ghcr.io/${{ github.repository_owner }}/koratflow-dino:latest
+
+      - name: 🚀 Trigger Portainer Webhook
+        run: |
+          curl -X POST "https://port.koratflow.agency/api/stacks/webhooks/0642d2e0-4527-4420-8a4b-b40dd19047cf"
